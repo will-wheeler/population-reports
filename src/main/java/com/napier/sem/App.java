@@ -17,6 +17,11 @@ import java.util.Scanner;
  */
 public class App
 {
+    private static final String DISTRICT_CITIES_QUERY =
+            "SELECT city.ID, city.Name AS city_name, city.CountryCode, city.District, "
+                    + "city.Population, country.Name AS country_name "
+                    + "FROM city JOIN country ON city.CountryCode = country.Code "
+                    + "WHERE city.District = ? ORDER BY city.Population DESC, city.ID ASC";
     private static final String COUNTRY_CITIES_QUERY =
             "SELECT city.ID, city.Name AS city_name, city.CountryCode, city.District, "
                     + "city.Population, country.Name AS country_name "
@@ -93,10 +98,9 @@ public class App
                 "Enter a country code for the all-cities report (press Enter for CAN): ", "CAN");
         ThisApp.printCountryCityReport(cityReportCountryCode.isBlank() ? "CAN" : cityReportCountryCode);
 
-        //Report #32
-        String districtName = readLineOrDefault(input, "Enter a district (for example, England): ", "England");
-        ArrayList<City> citiesInDistrict = ThisApp.getCitiesInDistrict(new District(districtName));
-        ThisApp.printCities(citiesInDistrict);
+        //Reports #23 and #32
+        String districtName = readLineOrDefault(input, "Enter a district (press Enter for England): ", "England");
+        ThisApp.printDistrictCityReport(new District(districtName.isBlank() ? "England" : districtName));
 
         //Report #36
         String regionName = readLineOrDefault(input, "Enter a region (for example, Eastern Africa): ",
@@ -694,7 +698,7 @@ public class App
     }
 
     /**
-     * Report 32
+     * Reports #23 and #32
      * This method returns a list of all Cities in the world by a District.
      * @param district the District you want to filter by.
      * @return list of all City objects filtered by a given District.
@@ -706,21 +710,25 @@ public class App
             throw new IllegalArgumentException("District must not be empty");
         }
 
-        String query = "SELECT ID, Name, CountryCode, District, Population "
-                + "FROM city WHERE District = ? ORDER BY Population DESC";
+        if (con == null)
+        {
+            System.out.println("Cannot retrieve district cities because the database connection is unavailable.");
+            return null;
+        }
+
         ArrayList<City> cities = new ArrayList<>();
 
-        try (PreparedStatement statement = con.prepareStatement(query))
+        try (PreparedStatement statement = con.prepareStatement(DISTRICT_CITIES_QUERY))
         {
             statement.setString(1, district.getName().trim());
-            ResultSet results = statement.executeQuery();
-            while (results.next())
+            try (ResultSet results = statement.executeQuery())
             {
-                cities.add(new City(results.getInt("ID"),
-                        results.getString("Name"),
-                        results.getString("CountryCode"),
-                        results.getString("District"),
-                        results.getInt("Population")));
+                while (results.next())
+                {
+                    cities.add(new City(results.getInt("ID"), results.getString("city_name"),
+                            results.getString("CountryCode"), results.getString("District"),
+                            results.getInt("Population")));
+                }
             }
             return cities;
         }
@@ -731,6 +739,40 @@ public class App
         }
     }
 
+
+    private void printDistrictCityReport(District district)
+    {
+        if (con == null)
+        {
+            System.out.println("Cannot retrieve district cities because the database connection is unavailable.");
+            return;
+        }
+        try (PreparedStatement statement = con.prepareStatement(DISTRICT_CITIES_QUERY))
+        {
+            statement.setString(1, district.getName().trim());
+            try (ResultSet results = statement.executeQuery())
+            {
+                if (!results.next())
+                {
+                    System.out.printf("No cities found for district '%s'.%n", district.getName());
+                    return;
+                }
+
+                System.out.printf("%nCities in %s by population%n", district.getName());
+                System.out.printf("%-35s %-52s %-20s %12s%n", "Name", "Country", "District", "Population");
+                do
+                {
+                    System.out.printf("%-35s %-52s %-20s %,12d%n", results.getString("city_name"),
+                            results.getString("country_name"), results.getString("District"),
+                            results.getInt("Population"));
+                } while (results.next());
+            }
+        }
+        catch (SQLException e)
+        {
+            System.out.println("Could not retrieve cities for the district: " + e.getMessage());
+        }
+    }
 
     /**
      * Report 38
