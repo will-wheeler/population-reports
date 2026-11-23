@@ -17,8 +17,6 @@ import java.util.Scanner;
  */
 public class App
 {
-    private static final String REGIONAL_CITIES_QUERY =
-
     private static final String DISTRICT_CITIES_QUERY =
             "SELECT city.ID, city.Name AS city_name, city.CountryCode, city.District, "
                     + "city.Population, country.Name AS country_name "
@@ -106,13 +104,6 @@ public class App
 
         //Reports #21
         ThisApp.printCities(ThisApp.getCitiesInRegion(thisRegion));
-
-        //Report #36
-        int numberOfRegionCountries = readPositiveInteger(
-                input, "Enter the number of top countries to display: ", 5);
-        ArrayList<Country> topCountriesInRegion =
-                ThisApp.getNPopulousCountriesInRegion(numberOfRegionCountries, reportRegion);
-        ThisApp.printCountries(topCountriesInRegion);
 
         //Report #38
         int numberOfContinentCities = readPositiveInteger(
@@ -601,7 +592,6 @@ public class App
                             + "city.Population, country.Name AS country_name "
                             + "FROM city JOIN country ON city.CountryCode = country.Code "
                             + "WHERE country.Region = ? ORDER BY city.Population DESC, city.ID ASC");
-            statement.setString(1, region.getName().strip());
 
             ResultSet results = statement.executeQuery();
 
@@ -618,40 +608,6 @@ public class App
         {
             System.out.println("Could not retrieve cities for the region: " + e.getMessage());
             return null;
-        }
-    }
-
-    private void printRegionalCityReport(Region region)
-    {
-        if (con == null)
-        {
-            System.out.println("Cannot retrieve regional cities because the database connection is unavailable.");
-            return;
-        }
-        try (PreparedStatement statement = con.prepareStatement(REGIONAL_CITIES_QUERY))
-        {
-            statement.setString(1, region.getName().strip());
-            try (ResultSet results = statement.executeQuery())
-            {
-                if (!results.next())
-                {
-                    System.out.printf("No cities found for region '%s'.%n", region.getName());
-                    return;
-                }
-
-                System.out.printf("%nCities in %s by population%n", region.getName());
-                System.out.printf("%-35s %-52s %-20s %12s%n", "Name", "Country", "District", "Population");
-                do
-                {
-                    System.out.printf("%-35s %-52s %-20s %,12d%n", results.getString("city_name"),
-                            results.getString("country_name"), results.getString("District"),
-                            results.getInt("Population"));
-                } while (results.next());
-            }
-        }
-        catch (SQLException e)
-        {
-            System.out.println("Could not retrieve cities for the region: " + e.getMessage());
         }
     }
 
