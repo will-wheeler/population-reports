@@ -76,6 +76,9 @@ public class App
         ArrayList<City> cities = ThisApp.getCitiesInPopulationSizeOrder();
         ThisApp.printCities(cities);
 
+        //Reports #21
+        ThisApp.printCities(ThisApp.getCitiesInRegion(thisRegion));
+
         //Report #25
         int numberOfCountries = readPositiveInteger(input, "Enter the number of top countries to display: ", 5);
         ArrayList<Country> topCountries = ThisApp.getNPopulousCountries(numberOfCountries);
@@ -101,10 +104,6 @@ public class App
         //Reports #23 and #32
         String districtName = readLineOrDefault(input, "Enter a district (press Enter for England): ", "England");
         ThisApp.printDistrictCityReport(new District(districtName.isBlank() ? "England" : districtName));
-
-        //Reports #21
-        ThisApp.printCities(ThisApp.getCitiesInRegion(thisRegion));
-
 
         //Report #38
         int numberOfContinentCities = readPositiveInteger(
