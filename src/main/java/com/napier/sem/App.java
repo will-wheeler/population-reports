@@ -76,6 +76,9 @@ public class App
         //Report #28
         ThisApp.printCities(ThisApp.getCitiesInContinent(thisContinent));
 
+        //Report #30
+        ThisApp.printCities(ThisApp.getCitiesInRegion(thisRegion));
+
         //Report #32
         String districtName = readLineOrDefault(input, "Enter a district (for example, England): ", "England");
         ArrayList<City> citiesInDistrict = ThisApp.getCitiesInDistrict(new District(districtName));
