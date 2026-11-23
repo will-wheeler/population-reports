@@ -105,6 +105,7 @@ public class App
         //Reports #21
         ThisApp.printCities(ThisApp.getCitiesInRegion(thisRegion));
 
+
         //Report #38
         int numberOfContinentCities = readPositiveInteger(
                 input, "Enter the number of top cities to display: ", 5);
@@ -591,7 +592,8 @@ public class App
                     "SELECT city.ID, city.Name AS city_name, city.CountryCode, city.District, "
                             + "city.Population, country.Name AS country_name "
                             + "FROM city JOIN country ON city.CountryCode = country.Code "
-                            + "WHERE country.Region = ? ORDER BY city.Population DESC, city.ID ASC");
+                            + "WHERE country.Region = '" + region.getName()
+                            + "' ORDER BY city.Population DESC, city.ID ASC");
 
             ResultSet results = statement.executeQuery();
 
