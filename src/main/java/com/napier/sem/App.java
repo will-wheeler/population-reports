@@ -18,10 +18,7 @@ import java.util.Scanner;
 public class App
 {
     private static final String REGIONAL_CITIES_QUERY =
-            "SELECT city.ID, city.Name AS city_name, city.CountryCode, city.District, "
-                    + "city.Population, country.Name AS country_name "
-                    + "FROM city JOIN country ON city.CountryCode = country.Code "
-                    + "WHERE country.Region = ? ORDER BY city.Population DESC, city.ID ASC";
+
     private static final String DISTRICT_CITIES_QUERY =
             "SELECT city.ID, city.Name AS city_name, city.CountryCode, city.District, "
                     + "city.Population, country.Name AS country_name "
@@ -107,12 +104,8 @@ public class App
         String districtName = readLineOrDefault(input, "Enter a district (press Enter for England): ", "England");
         ThisApp.printDistrictCityReport(new District(districtName.isBlank() ? "England" : districtName));
 
-        //Reports #21 and #36 use the same region.
-        String defaultRegion = "Eastern Africa";
-        String regionName = readLineOrDefault(input, "Enter a region for the city and country reports "
-                + "(press Enter for Eastern Africa): ", defaultRegion);
-        Region reportRegion = new Region(regionName.isBlank() ? defaultRegion : regionName);
-        ThisApp.printRegionalCityReport(reportRegion);
+        //Reports #21
+        ThisApp.printCities(ThisApp.getCitiesInRegion(thisRegion));
 
         //Report #36
         int numberOfRegionCountries = readPositiveInteger(
@@ -600,30 +593,25 @@ public class App
      */
     public ArrayList<City> getCitiesInRegion(Region region)
     {
-        if (region == null || region.getName() == null || region.getName().isBlank())
-        {
-            System.out.println("Please provide a region name.");
-            return null;
-        }
-        if (con == null)
-        {
-            System.out.println("Cannot retrieve regional cities because the database connection is unavailable.");
-            return null;
-        }
-
         ArrayList<City> cities = new ArrayList<>();
-        try (PreparedStatement statement = con.prepareStatement(REGIONAL_CITIES_QUERY))
+        try
         {
+            PreparedStatement statement = con.prepareStatement(
+                    "SELECT city.ID, city.Name AS city_name, city.CountryCode, city.District, "
+                            + "city.Population, country.Name AS country_name "
+                            + "FROM city JOIN country ON city.CountryCode = country.Code "
+                            + "WHERE country.Region = ? ORDER BY city.Population DESC, city.ID ASC");
             statement.setString(1, region.getName().strip());
-            try (ResultSet results = statement.executeQuery())
+
+            ResultSet results = statement.executeQuery();
+
+            while (results.next())
             {
-                while (results.next())
-                {
-                    cities.add(new City(results.getInt("ID"), results.getString("city_name"),
-                            results.getString("CountryCode"), results.getString("District"),
-                            results.getInt("Population")));
-                }
+                cities.add(new City(results.getInt("ID"), results.getString("city_name"),
+                results.getString("CountryCode"), results.getString("District"),
+                results.getInt("Population")));
             }
+
             return cities;
         }
         catch (SQLException e)
