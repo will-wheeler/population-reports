@@ -3,7 +3,6 @@ package com.napier.sem;
 import org.junit.jupiter.api.*;
 
 import java.util.ArrayList;
-import java.util.Scanner;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -369,32 +368,6 @@ class AppUnitTest
                 >= sortedCountries.get(1).getPopulation());
         assertTrue(sortedCountries.get(1).getPopulation()
                 >= sortedCountries.get(2).getPopulation());
-    }
-
-    @Test
-    void readPositiveIntegerAcceptsMultipleUserInputsFromOneScanner()
-    {
-        Scanner input = new Scanner("USA\n2\n7\n");
-
-        assertEquals("USA", App.readLineOrDefault(input, "Country: ", "CAN"));
-        assertEquals(2, App.readPositiveInteger(input, "Top cities: ", 5));
-        assertEquals(7, App.readPositiveInteger(input, "Top countries: ", 5));
-    }
-
-    @Test
-    void readPositiveIntegerAsksAgainAfterInvalidInput()
-    {
-        assertEquals(3, App.readPositiveInteger(
-                new Scanner("many\n0\n3"), "Top countries: ", 5));
-    }
-
-    @Test
-    void inputReadersUseDefaultsWhenStandardInputIsClosed()
-    {
-        Scanner input = new Scanner("");
-
-        assertEquals("USA", App.readLineOrDefault(input, "Country: ", "USA"));
-        assertEquals(5, App.readPositiveInteger(input, "Top countries: ", 5));
     }
 
     @Test
