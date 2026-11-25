@@ -268,6 +268,25 @@ public class AppIntegrationTest {
     }
 
     /**
+     * Verifies that {@link App#getNPopulousCities(int)} returns exactly the requested
+     * number of world cities in descending population order.
+     */
+    @Test
+    void testGetNPopulousCities()
+    {
+        ArrayList<City> cities = app.getNPopulousCities(5);
+
+        assertNotNull(cities);
+        assertEquals(5, cities.size());
+        double previousPopulation = Double.POSITIVE_INFINITY;
+        for (City city : cities)
+        {
+            assertTrue(city.getPopulation() <= previousPopulation);
+            previousPopulation = city.getPopulation();
+        }
+    }
+
+    /**
      * Verifies that {@link App#getCountriesInContinent(Continent)} returns a valid list of countries
      */
     @Test

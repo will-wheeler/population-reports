@@ -396,6 +396,13 @@ class AppUnitTest
     }
 
     @Test
+    void getNPopulousCitiesRejectsNonPositiveLimit()
+    {
+        assertThrows(IllegalArgumentException.class, () -> app.getNPopulousCities(0));
+        assertThrows(IllegalArgumentException.class, () -> app.getNPopulousCities(-1));
+    }
+
+    @Test
     void getNPopulousCitiesInContinentRejectsInvalidInput()
     {
         assertThrows(IllegalArgumentException.class,

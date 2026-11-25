@@ -40,7 +40,7 @@ public class App
         Region thisRegion = new Region("Eastern Africa");
         District thisDistrict = new District("England");
         // Change these values to select report filters and the number of top results.
-        int topReportLimit = 5;
+        int topReportLimit = 2;
 
 
         /*
@@ -87,6 +87,9 @@ public class App
 
         //Reports #23 and #32
         ThisApp.printDistrictCityReport(thisDistrict);
+
+        // Top N cities in the world
+        ThisApp.printCities(ThisApp.getNPopulousCities(topReportLimit));
 
         //Report #38
         ArrayList<City> topCitiesInContinent =
@@ -230,8 +233,13 @@ public class App
                 results.getString("Continent"),
                 results.getString("Region"),
                 results.getInt("Population"),
-                results.getString("Capital"));
+                results.getString("CapitalName"));
     }
+
+    private static final String COUNTRY_SELECT =
+            "SELECT country.Code, country.Name, country.Continent, country.Region, "
+                    + "country.Population, city.Name AS CapitalName "
+                    + "FROM country LEFT JOIN city ON city.ID = country.Capital ";
 
     /**
      * Report #16
@@ -242,7 +250,7 @@ public class App
     {
         try {
 
-            String query = "SELECT Code, Name, Continent, Region, Population, Capital FROM country ORDER BY Population DESC";
+            String query = COUNTRY_SELECT + "ORDER BY country.Population DESC";
             Statement statement = con.createStatement();
             ResultSet results = statement.executeQuery(query);
 
@@ -268,8 +276,8 @@ public class App
     public ArrayList<Country> getCountriesInContinent(Continent continent){
         try {
 
-            String query = "SELECT Code, Name, Continent, Region, Population, Capital FROM country WHERE Continent LIKE '"
-                    + continent.getName() + "' ORDER BY Population DESC";
+            String query = COUNTRY_SELECT + "WHERE country.Continent LIKE '"
+                    + continent.getName() + "' ORDER BY country.Population DESC";
             Statement statement = con.createStatement();
             ResultSet results = statement.executeQuery(query);
 
@@ -296,8 +304,7 @@ public class App
      */
     public ArrayList<Country> getCountriesInRegion(Region region)
     {
-        String query = "SELECT Code, Name, Continent, Region, Population, Capital "
-                + "FROM country WHERE Region = ? ORDER BY Population DESC";
+        String query = COUNTRY_SELECT + "WHERE country.Region = ? ORDER BY country.Population DESC";
         ArrayList<Country> countries = new ArrayList<>();
 
         try (PreparedStatement statement = con.prepareStatement(query))
@@ -412,8 +419,7 @@ public class App
             throw new IllegalArgumentException("N must be greater than zero");
         }
 
-        String query = "SELECT Code, Name, Continent, Region, Population, Capital "
-                + "FROM country ORDER BY Population DESC LIMIT ?";
+        String query = COUNTRY_SELECT + "ORDER BY country.Population DESC LIMIT ?";
         ArrayList<Country> countries = new ArrayList<>();
 
         try (PreparedStatement statement = con.prepareStatement(query))
@@ -453,8 +459,8 @@ public class App
             throw new IllegalArgumentException("Continent must not be empty");
         }
 
-        String query = "SELECT Code, Name, Continent, Region, Population, Capital "
-                + "FROM country WHERE Continent = ? ORDER BY Population DESC LIMIT ?";
+        String query = COUNTRY_SELECT
+                + "WHERE country.Continent = ? ORDER BY country.Population DESC LIMIT ?";
         ArrayList<Country> countries = new ArrayList<>();
 
         try (PreparedStatement statement = con.prepareStatement(query))
@@ -492,8 +498,8 @@ public class App
             throw new IllegalArgumentException("Region must not be empty");
         }
 
-        String query = "SELECT Code, Name, Continent, Region, Population, Capital "
-                + "FROM country WHERE Region = ? ORDER BY Population DESC LIMIT ?";
+        String query = COUNTRY_SELECT
+                + "WHERE country.Region = ? ORDER BY country.Population DESC LIMIT ?";
         ArrayList<Country> countries = new ArrayList<>();
 
         try (PreparedStatement statement = con.prepareStatement(query))
@@ -682,6 +688,45 @@ public class App
     }
 
     /**
+     * Returns the N most populous cities in the world.
+     * @param N maximum number of cities to return
+     * @return cities ordered by population from largest to smallest
+     */
+    public ArrayList<City> getNPopulousCities(int N)
+    {
+        if (N <= 0)
+        {
+            throw new IllegalArgumentException("N must be greater than zero");
+        }
+
+        String query = "SELECT ID, Name, CountryCode, District, Population "
+                + "FROM city ORDER BY Population DESC LIMIT ?";
+        ArrayList<City> cities = new ArrayList<>();
+
+        try (PreparedStatement statement = con.prepareStatement(query))
+        {
+            statement.setInt(1, N);
+            try (ResultSet results = statement.executeQuery())
+            {
+                while (results.next())
+                {
+                    cities.add(new City(results.getInt("ID"),
+                            results.getString("Name"),
+                            results.getString("CountryCode"),
+                            results.getString("District"),
+                            results.getInt("Population")));
+                }
+            }
+            return cities;
+        }
+        catch (SQLException e)
+        {
+            System.out.println("getNPopulousCities error: " + e.getMessage());
+            return null;
+        }
+    }
+
+    /**
      * Report #38: Returns the N most populous cities in a continent.
      * @param N maximum number of cities to return
      * @param continent which continent to filter
@@ -850,15 +895,16 @@ public class App
     {
         try {
 
-            String query = "SELECT ID, city.Name, CountryCode, District, city.Population FROM country "
-                    + "LEFT JOIN city ON city.ID = country.Capital ORDER BY Population DESC";
+            String query = "SELECT city.ID, city.Name, city.CountryCode, city.District, city.Population "
+                    + "FROM country JOIN city ON city.ID = country.Capital "
+                    + "ORDER BY city.Population DESC";
             Statement statement = con.createStatement();
             ResultSet rset = statement.executeQuery(query);
 
             ArrayList<City> cities = new ArrayList<>();
             while (rset.next()) {
                 City city = new City(rset.getInt("ID"),
-                        rset.getString("City.Name"),
+                        rset.getString("Name"),
                         rset.getString("CountryCode"),
                         rset.getString("District"),
                         rset.getInt("Population"));
@@ -869,7 +915,7 @@ public class App
         }
         catch (Exception e)
         {
-            System.out.println("ViewCitiesInRegion failed: " + e.getMessage());
+            System.out.println("getCapitalCities failed: " + e.getMessage());
             return null;
         }
     }
@@ -964,32 +1010,33 @@ public class App
      */
     public ArrayList<City> getNCapitalCities(int N)
     {
+        if (N <= 0)
+        {
+            throw new IllegalArgumentException("N must be greater than zero");
+        }
+
         try {
 
-            String query = "SELECT ID, city.Name, CountryCode, District, city.Population FROM country "
-                    + "LEFT JOIN city ON city.ID = country.Capital ORDER BY Population DESC";
+            String query = "SELECT city.ID, city.Name, city.CountryCode, city.District, city.Population "
+                    + "FROM country JOIN city ON city.ID = country.Capital "
+                    + "ORDER BY city.Population DESC LIMIT " + N;
             Statement statement = con.createStatement();
             ResultSet rset = statement.executeQuery(query);
 
             ArrayList<City> cities = new ArrayList<>();
-
-            int counter = 1;
-
-            while (rset.next() && counter <= N) {
-                City city = new City(rset.getInt("ID"),
-                        rset.getString("City.Name"),
+            while (rset.next()) {
+                cities.add(new City(rset.getInt("ID"),
+                        rset.getString("Name"),
                         rset.getString("CountryCode"),
                         rset.getString("District"),
-                        rset.getInt("Population"));
-                cities.add(city);
-                counter++;
+                        rset.getInt("Population")));
             }
 
             return cities;
         }
         catch (Exception e)
         {
-            System.out.println("ViewCitiesInRegion failed: " + e.getMessage());
+            System.out.println("getNCapitalCities failed: " + e.getMessage());
             return null;
         }
     }
@@ -1003,37 +1050,37 @@ public class App
      */
     public ArrayList<City> getNCapitalCitiesInContinent(int N, Continent continent)
     {
+        if (N <= 0)
+        {
+            throw new IllegalArgumentException("N must be greater than zero");
+        }
+
         try {
 
             String query =
-                    "SELECT city.ID, city.Name, CountryCode, District, city.Population "
+                    "SELECT city.ID, city.Name, city.CountryCode, city.District, city.Population "
                             + "FROM country "
-                            + "LEFT JOIN city ON city.ID = country.Capital "
+                            + "JOIN city ON city.ID = country.Capital "
                             + "WHERE country.Continent LIKE '" + continent.getName() + "'"
-                            + " ORDER BY city.Population DESC";
+                            + " ORDER BY city.Population DESC LIMIT " + N;
 
             Statement statement = con.createStatement();
             ResultSet rset = statement.executeQuery(query);
 
             ArrayList<City> cities = new ArrayList<>();
-
-            int counter = 1;
-
-            while (rset.next() && counter <= N) {
-                City city = new City(rset.getInt("ID"),
-                        rset.getString("City.Name"),
+            while (rset.next()) {
+                cities.add(new City(rset.getInt("ID"),
+                        rset.getString("Name"),
                         rset.getString("CountryCode"),
                         rset.getString("District"),
-                        rset.getInt("Population"));
-                cities.add(city);
-                counter++;
+                        rset.getInt("Population")));
             }
 
             return cities;
         }
         catch (Exception e)
         {
-            System.out.println("ViewCitiesInRegion failed: " + e.getMessage());
+            System.out.println("getNCapitalCitiesInContinent failed: " + e.getMessage());
             return null;
         }
     }
@@ -1047,37 +1094,37 @@ public class App
      */
     public ArrayList<City> getNCapitalCitiesInRegion(int N, Region region)
     {
+        if (N <= 0)
+        {
+            throw new IllegalArgumentException("N must be greater than zero");
+        }
+
         try {
 
             String query =
-                    "SELECT city.ID, city.Name, CountryCode, District, city.Population "
+                    "SELECT city.ID, city.Name, city.CountryCode, city.District, city.Population "
                             + "FROM country "
-                            + "LEFT JOIN city ON city.ID = country.Capital "
+                            + "JOIN city ON city.ID = country.Capital "
                             + "WHERE country.Region LIKE '" + region.getName() + "'"
-                            + " ORDER BY city.Population DESC";
+                            + " ORDER BY city.Population DESC LIMIT " + N;
 
             Statement statement = con.createStatement();
             ResultSet rset = statement.executeQuery(query);
 
             ArrayList<City> cities = new ArrayList<>();
-
-            int counter = 1;
-
-            while (rset.next() && counter <= N) {
-                City city = new City(rset.getInt("ID"),
-                        rset.getString("City.Name"),
+            while (rset.next()) {
+                cities.add(new City(rset.getInt("ID"),
+                        rset.getString("Name"),
                         rset.getString("CountryCode"),
                         rset.getString("District"),
-                        rset.getInt("Population"));
-                cities.add(city);
-                counter++;
+                        rset.getInt("Population")));
             }
 
             return cities;
         }
         catch (Exception e)
         {
-            System.out.println("ViewCitiesInRegion failed: " + e.getMessage());
+            System.out.println("getNCapitalCitiesInRegion failed: " + e.getMessage());
             return null;
         }
     }
@@ -1429,31 +1476,26 @@ public class App
      */
     public long getTotalPopulationByDistrict(District district)
     {
-        try
+        if (district == null || district.getName() == null || district.getName().trim().isEmpty())
         {
-            // Create string for SQL statement
-            String query =
-                    "SELECT SUM(Population) AS total "
-                            + "FROM country "
-                            + "WHERE country.District LIKE '" + district.getName() + "'";
-            // Create an SQL statement
-            Statement stmt = con.createStatement();
-            // Execute SQL statement
-            ResultSet rset = stmt.executeQuery(query);
-
-            /*
-                Using a 'long' instead of Int because a total population
-                of a large dataset could exceed the standard limit of Int and
-             */
-            long totalPop = 0;
-
-            while(rset.next()){
-                totalPop = rset.getLong("total");
-            }
-
-            return totalPop;
+            throw new IllegalArgumentException("District must not be empty");
         }
-        catch (Exception e)
+
+        String query = "SELECT COALESCE(SUM(Population), 0) AS total FROM city WHERE District = ?";
+
+        try (PreparedStatement statement = con.prepareStatement(query))
+        {
+            statement.setString(1, district.getName().trim());
+            try (ResultSet rset = statement.executeQuery())
+            {
+                if (rset.next())
+                {
+                    return rset.getLong("total");
+                }
+                return 0;
+            }
+        }
+        catch (SQLException e)
         {
             System.out.println(e.getMessage());
             System.out.println("Failed to get total population");
@@ -1462,39 +1504,48 @@ public class App
     }
 
     /**
-     * Report #55
+     * Report #56
      * View the total population of a City
      * @param city the City that you want to filter by.
      * @return the total population of the City inputted
      */
     public long getTotalPopulationByCity(City city)
     {
-        try
+        if (city == null)
         {
-            // Create string for SQL statement
-            String query =
-                    "SELECT SUM(country.Population) AS total "
-                            + "FROM city "
-                            + "LEFT JOIN country ON country.Code = city.CountryCode "
-                            + "WHERE city.Name LIKE '" + city.getName() + "'";
-            // Create an SQL statement
-            Statement stmt = con.createStatement();
-            // Execute SQL statement
-            ResultSet rset = stmt.executeQuery(query);
+            throw new IllegalArgumentException("City must not be null");
+        }
 
-            /*
-                Using a 'long' instead of Int because a total population
-                of a large dataset could exceed the standard limit of Int and
-             */
-            long totalPop = 0;
+        // Prefer lookup by ID when available; fall back to name for hard-coded demo cities.
+        String query = city.getId() != 0
+                ? "SELECT Population AS total FROM city WHERE ID = ?"
+                : "SELECT COALESCE(SUM(Population), 0) AS total FROM city WHERE Name = ?";
 
-            while(rset.next()){
-                totalPop = rset.getLong("total");
+        try (PreparedStatement statement = con.prepareStatement(query))
+        {
+            if (city.getId() != 0)
+            {
+                statement.setInt(1, city.getId());
+            }
+            else
+            {
+                if (city.getName() == null || city.getName().trim().isEmpty())
+                {
+                    throw new IllegalArgumentException("City name must not be empty");
+                }
+                statement.setString(1, city.getName().trim());
             }
 
-            return totalPop;
+            try (ResultSet rset = statement.executeQuery())
+            {
+                if (rset.next())
+                {
+                    return rset.getLong("total");
+                }
+                return 0;
+            }
         }
-        catch (Exception e)
+        catch (SQLException e)
         {
             System.out.println(e.getMessage());
             System.out.println("Failed to get total population");
