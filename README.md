@@ -4,5 +4,3 @@
 * RayClen Cardoso
 * Magnus Mcghee
 * Umer zia
-
-* This is a spellng misteke
