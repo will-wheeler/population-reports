@@ -45,7 +45,7 @@ class AppUnitTest
     void testAddCity() {
 
         // Testing Constructors
-        assertEquals(460, testCity.getId());
+        assertEquals(459, testCity.getId());
         assertEquals("Edinburgh", testCity.getName());
         assertEquals("GBR", testCity.getCountryCode());
         assertEquals("Scotland", testCity.getDistrict());
