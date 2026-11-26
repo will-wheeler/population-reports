@@ -3,11 +3,8 @@ package com.napier.sem;
 import org.junit.jupiter.api.*;
 
 import java.util.ArrayList;
-import java.util.Scanner;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 
 
 class AppUnitTest
@@ -39,6 +36,7 @@ class AppUnitTest
 
         testCountry = new Country("CAN","Canada","North America","North America",31147000,"Ottowa");
     }
+
     /**
      * Tests the City Class. Making sure that a valid city can be created
      * to mirror the "city" database table.
@@ -79,6 +77,10 @@ class AppUnitTest
 
     }
 
+    /**
+     * Tests the Continent Class. Making sure that a valid Continent can be created
+     * to mirror the "Continent" value from the country database table.
+     */
     @Test
     void testAddContinent() {
 
@@ -101,6 +103,8 @@ class AppUnitTest
     /**
      * Tests the Country Class. Making sure that a valid country can be created
      * to mirror the "country" database table.
+     *
+     * @see Country
      */
     @Test
     void testAddCountry() {
@@ -139,6 +143,12 @@ class AppUnitTest
 
     }
 
+    /**
+     * Tests the District Class. Making sure that a valid District can be created
+     * to mirror the "District" value from the city database table.
+     *
+     * @see District
+     */
     @Test
     void testAddDistrict() {
 
@@ -159,6 +169,12 @@ class AppUnitTest
 
     }
 
+    /**
+     * Tests the Region Class. Making sure that a valid Region can be created
+     * to mirror the "Region" value from the country database table.
+     *
+     * @see Region
+     */
     @Test
     void testAddRegion() {
 
@@ -180,7 +196,9 @@ class AppUnitTest
 
 
     /**
-     * Testing when the array is null
+     * Testing when the cities array is null
+     *
+     * @see App#printCities(ArrayList)
      */
     @Test
     void printCitiesTestNull(){
@@ -190,7 +208,9 @@ class AppUnitTest
     }
 
     /**
-     *  Testing when the array list is empty
+     *  Testing when the cities array list is empty
+     *
+     *  @see App#printCities(ArrayList)
      */
     @Test
     void printCitiesTestEmpty(){
@@ -201,18 +221,13 @@ class AppUnitTest
 
     /**
      *  Testing when the city is populated
+     *
+     *  @see App#printCities(ArrayList)
      */
     @Test
     void printCitiesTestPopulated(){
 
         ArrayList<City> cities = new ArrayList<>();
-
-        // Populating the city class
-        City testCity = new City(460,
-                "Edinburgh",
-                "GBR",
-                "District",
-                450180);
 
         // Adding the populated object to the array
         cities.add(testCity);
@@ -222,17 +237,14 @@ class AppUnitTest
     }
 
     /**
-     *  Testing edge cases of Integers
+     *  Testing edge cases of Integers from the cities class
+     *
+     *  @see App#printCities(ArrayList)
      */
     @Test
     void printCitiesTestEdgeCase(){
 
         ArrayList<City> cities = new ArrayList<>();
-        City testCity = new City(460,
-                "Edinburgh",
-                "GBR",
-                "Scotland",
-                450180);
 
         testCity.setId(0);
         testCity.setPopulation(0);
@@ -243,25 +255,65 @@ class AppUnitTest
 
     }
 
+    /**
+     * Testing when the countries array is null
+     *
+     * @see App#printCountries(ArrayList)
+     */
     @Test
     void printCountriesTestNull(){
         ArrayList<Country> countries = null;
         app.printCountries(countries);
     }
 
+    /**
+     *  Testing when the countries array list is empty
+     *
+     *  @see App#printCountries(ArrayList)
+     */
     @Test
     void printCountriesTestEmpty(){
         ArrayList<Country> countries = new ArrayList<>();
         app.printCountries(countries);
     }
 
+    /**
+     *  Testing when the country is populated
+     *
+     *  @see App#printCountries(ArrayList)
+     */
     @Test
     void printCountriesTestPopulated(){
         ArrayList<Country> countries = new ArrayList<>();
 
-        //need to finish implementing this
+        countries.add(testCountry);
+
+        app.printCountries(countries);
     }
 
+    /**
+     *  Testing edge cases of Integers from the countries class
+     *
+     *  @see App#printCountries(ArrayList)
+     */
+    @Test
+    void printCountriesTestEdgeCase(){
+
+        ArrayList<Country> countries = new ArrayList<>();
+
+        testCountry.setPopulation(0);
+
+        countries.add(testCountry);
+
+        app.printCountries(countries);
+
+    }
+
+    /**
+     *
+     * Testing that an array list of countries inputted, are correctly sorted by their population from largest to smallest.
+     * {@link App#sortCountriesByPopulation}
+     */
     @Test
     void sortCountriesByPopulationOrdersLargestToSmallest()
     {
@@ -287,6 +339,12 @@ class AppUnitTest
         assertTrue(sortedCountries.get(1).getPopulation()
                 >= sortedCountries.get(2).getPopulation());
     }
+    /**
+     *
+     * Testing that an array list of countries (in the same region) inputted, are correctly sorted
+     * by their population from largest to smallest.
+     * {@link App#sortCountriesByPopulation}
+     */
 
     @Test
     void sortCountriesInRegionByPopulationOrdersLargestToSmallest()
@@ -310,32 +368,6 @@ class AppUnitTest
                 >= sortedCountries.get(1).getPopulation());
         assertTrue(sortedCountries.get(1).getPopulation()
                 >= sortedCountries.get(2).getPopulation());
-    }
-
-    @Test
-    void readPositiveIntegerAcceptsMultipleUserInputsFromOneScanner()
-    {
-        Scanner input = new Scanner("USA\n2\n7\n");
-
-        assertEquals("USA", App.readLineOrDefault(input, "Country: ", "CAN"));
-        assertEquals(2, App.readPositiveInteger(input, "Top cities: ", 5));
-        assertEquals(7, App.readPositiveInteger(input, "Top countries: ", 5));
-    }
-
-    @Test
-    void readPositiveIntegerAsksAgainAfterInvalidInput()
-    {
-        assertEquals(3, App.readPositiveInteger(
-                new Scanner("many\n0\n3"), "Top countries: ", 5));
-    }
-
-    @Test
-    void inputReadersUseDefaultsWhenStandardInputIsClosed()
-    {
-        Scanner input = new Scanner("");
-
-        assertEquals("USA", App.readLineOrDefault(input, "Country: ", "USA"));
-        assertEquals(5, App.readPositiveInteger(input, "Top countries: ", 5));
     }
 
     @Test
@@ -364,6 +396,13 @@ class AppUnitTest
     }
 
     @Test
+    void getNPopulousCitiesRejectsNonPositiveLimit()
+    {
+        assertThrows(IllegalArgumentException.class, () -> app.getNPopulousCities(0));
+        assertThrows(IllegalArgumentException.class, () -> app.getNPopulousCities(-1));
+    }
+
+    @Test
     void getNPopulousCitiesInContinentRejectsInvalidInput()
     {
         assertThrows(IllegalArgumentException.class,
@@ -373,10 +412,53 @@ class AppUnitTest
     }
 
     @Test
+    void getCapitalCitiesInContinentRejectsInvalidInput()
+    {
+        assertThrows(IllegalArgumentException.class, () -> app.getCapitalCitiesInContinent(null));
+        assertThrows(IllegalArgumentException.class,
+                () -> app.getCapitalCitiesInContinent(new Continent(" ")));
+    }
+
+    @Test
+    void getCapitalCitiesInRegionRejectsInvalidInput()
+    {
+        assertThrows(IllegalArgumentException.class, () -> app.getCapitalCitiesInRegion(null));
+        assertThrows(IllegalArgumentException.class,
+                () -> app.getCapitalCitiesInRegion(new Region(" ")));
+    }
+
+    @Test
     void getCitiesInDistrictRejectsMissingDistrict()
     {
         assertThrows(IllegalArgumentException.class, () -> app.getCitiesInDistrict(null));
         assertThrows(IllegalArgumentException.class, () -> app.getCitiesInDistrict(new District(" ")));
+    }
+
+    @Test
+    void getCitiesInCountryRejectsMissingCountryCode()
+    {
+        assertThrows(IllegalArgumentException.class, () -> app.getCitiesInCountry(null));
+        Country countryWithoutCode = new Country(" ", "Canada", "North America",
+                "North America", 31147000, "Ottawa");
+        assertThrows(IllegalArgumentException.class, () -> app.getCitiesInCountry(countryWithoutCode));
+    }
+
+    @Test
+    void populationPercentagesAddUpToOneHundred()
+    {
+        double cityPercent = App.getPopulationPercentage(400, 1000);
+        double nonCityPercent = App.getPopulationPercentage(600, 1000);
+
+        assertEquals(40.0, cityPercent);
+        assertEquals(60.0, nonCityPercent);
+        assertEquals(100.0, cityPercent + nonCityPercent);
+        assertEquals(0.0, App.getPopulationPercentage(0, 0));
+    }
+
+    @Test
+    void populationPercentageCalculatesLanguageShareOfWorld()
+    {
+        assertEquals(10.0, App.getPopulationPercentage(100, 1000));
     }
 
     @Test
@@ -393,13 +475,5 @@ class AppUnitTest
                 () -> app.getNPopulousCitiesInCountry(5, " "));
         assertThrows(IllegalArgumentException.class,
                 () -> app.getNPopulousCitiesInCountry(5, null));
-    }
-
-    @Test
-    void printCountriesTest(){
-        ArrayList<Country> testCountries = new ArrayList<>();
-        app.printCountries(testCountries);
-        testCountries.add(testCountry);
-        app.printCountries(testCountries);
     }
 }
