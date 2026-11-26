@@ -6,7 +6,12 @@ import java.util.ArrayList;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-
+/**
+ *<p>
+ *     The AppUnitTest class is where our Unit tests (Tests that do not need a database connection) are carried out.
+ *
+ *</p>
+ */
 class AppUnitTest
 {
     static App app;
